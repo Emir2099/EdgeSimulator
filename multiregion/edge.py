@@ -8,6 +8,7 @@ from datetime import datetime
 from load_balancer import LoadBalancer
 import zlib
 from datetime import datetime
+from compression_manager import CompressionManager, CompressionType
 
 # Directories for regions
 regions = ['region_1', 'region_2', 'region_3']
@@ -22,6 +23,9 @@ for directory in replicated_directories.values():
 
 # Load balancer
 load_balancer = LoadBalancer(regions)
+
+# Compression manager
+compression_manager = CompressionManager(CompressionType.ZLIB)
 
 # Simulate sensor data generation
 def generate_sensor_data():
@@ -67,15 +71,17 @@ def save_to_cloud(region, data):
     file_name = f"aggregated_data_{datetime.now().strftime('%Y%m%d%H%M%S')}.json.gz"
     
     # Compress and get data size
-    json_data = json.dumps(data, cls=DateTimeEncoder)
-    compressed_data = zlib.compress(json_data.encode('utf-8'))
+    json_data = json.dumps(data, cls=DateTimeEncoder).encode('utf-8')
+    compressed_data = compression_manager.compress(json_data)
     data_size = len(compressed_data)
+    
+    # Calculate compression ratio and update stats
+    compression_ratio = compression_manager.update_stats(len(json_data), data_size)
     
     # Get optimal region before updating load
     current_load = load_balancer.region_loads[region]
     optimal_region = load_balancer.get_optimal_region()
     
-    # Only redirect if the optimal region has significantly less load
     if optimal_region != region and load_balancer.region_loads[optimal_region] < current_load * 0.7:
         print(f"Redirecting data from {region} to {optimal_region} for better load distribution")
         region = optimal_region
@@ -86,8 +92,8 @@ def save_to_cloud(region, data):
     with open(file_path, 'wb') as f:
         f.write(compressed_data)
     
-    compression_ratio = (len(json_data.encode('utf-8')) - len(compressed_data)) / len(json_data.encode('utf-8')) * 100
     print(f"Compression ratio: {compression_ratio:.2f}%")
+    print(f"Average compression ratio: {compression_manager.get_average_ratio():.2f}%")
     print(f"Current loads: {load_balancer.region_loads}")
     
     # Update load balancer
@@ -117,11 +123,12 @@ def read_compressed_data(file_path):
     try:
         with open(file_path, 'rb') as f:
             compressed_data = f.read()
-            json_data = zlib.decompress(compressed_data).decode('utf-8')
-            return json.loads(json_data)
+            json_data = compression_manager.decompress(compressed_data)
+            if json_data:
+                return json.loads(json_data.decode('utf-8'))
     except Exception as e:
         print(f"Error reading compressed file {file_path}: {str(e)}")
-        return None
+    return None
 
 # Start the simulation
 def main():
