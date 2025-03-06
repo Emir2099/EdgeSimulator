@@ -1,0 +1,21 @@
+# Ignore all JSON files in cloud storage directories
+*_cloud_storage/*.json
+*_replicated_storage/*.json
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE specific
+.vscode/
+.idea/
+
+# System specific
+.DS_Store
+Thumbs.db
