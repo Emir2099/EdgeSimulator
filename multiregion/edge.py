@@ -13,6 +13,8 @@ from anomaly_detector import AnomalyDetector
 from smart_cache import SmartCache
 from encryption_manager import EncryptionManager
 from version_control import DataVersionControl
+from health_monitor import HealthMonitor
+import psutil
 
 # Directories for regions
 regions = ['region_1', 'region_2', 'region_3']
@@ -42,6 +44,11 @@ encryption_manager = EncryptionManager()
 
 # Version control
 version_control = DataVersionControl(os.path.dirname(os.path.abspath(__file__)))
+
+# Health monitor
+health_monitor = HealthMonitor(check_interval=5)
+health_monitor.update_threshold('disk_percent', 85.0)  # More reasonable disk threshold
+health_monitor.update_threshold('cpu_percent', 75.0)   # More reasonable CPU threshold
 
 def determine_priority(summary, anomaly_prediction):
     """
@@ -251,18 +258,88 @@ def manage_versions(file_path):
 
 # Start the simulation
 def main():
-    # Start edge devices for each region
-    for region in regions:
-        threading.Thread(target=edge_device, args=(region,), daemon=True).start()
+    try:
+        # Start health monitoring
+        health_monitor.start()
+        print("Health monitoring system started")
+        
+        # Create logs directory if it doesn't exist
+        logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+        os.makedirs(logs_dir, exist_ok=True)
+        
+        # Initialize log file with current date
+        log_file = os.path.join(logs_dir, f'health_report_{datetime.now().strftime("%Y%m%d")}.log')
+        
+        # Start threads
+        edge_threads = []
+        for region in regions:
+            thread = threading.Thread(target=edge_device, args=(region,), daemon=True)
+            thread.start()
+            edge_threads.append(thread)
 
-    # Start inter-region replication threads
-    for i, source_region in enumerate(regions):
-        target_region = regions[(i + 1) % len(regions)]  # Circular replication
-        threading.Thread(target=replicate_data, args=(source_region, target_region), daemon=True).start()
+        # Start inter-region replication threads
+        replication_threads = []
+        for i, source_region in enumerate(regions):
+            target_region = regions[(i + 1) % len(regions)]
+            thread = threading.Thread(target=replicate_data, 
+                                   args=(source_region, target_region),
+                                   daemon=True)
+            thread.start()
+            replication_threads.append(thread)
 
-    # Keep the main thread alive
-    while True:
-        time.sleep(1)
+        # Monitor and report system health
+        while True:
+            time.sleep(30)  # Report every 30 seconds
+            metrics = health_monitor.get_metrics_summary()
+            
+            # Format the report
+            report = []
+            report.append(f"\n{'='*80}")
+            report.append(f"System Health Report @ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            report.append(f"{'='*80}\n")
+            
+            report.append("System Metrics:")
+            report.append("-" * 50)
+            for metric, values in metrics.items():
+                if metric != 'timestamp':
+                    report.append(
+                        f"{metric:<18}: {values['current']:>6.2f} | "
+                        f"Avg={values['avg']:>6.2f} | "
+                        f"Max={values['max']:>6.2f} | "
+                        f"Min={values['min']:>6.2f}")
+            
+            # Add alerts if any
+            recent_alerts = health_monitor.get_recent_alerts()
+            if recent_alerts:
+                report.append("\nRecent Alerts:")
+                report.append("-" * 50)
+                for alert in recent_alerts:
+                    report.append(
+                        f"[{alert['timestamp']}] {alert['metric']}: "
+                        f"{alert['value']:.2f} > {alert['threshold']:.2f}")
+            
+            # Write to log file
+            with open(log_file, 'a') as f:
+                f.write('\n'.join(report) + '\n')
+            
+            # Show minimal console output
+            print(f"\rHealth report updated @ {datetime.now().strftime('%H:%M:%S')} | "
+                  f"CPU: {metrics['cpu_percent']['current']:.1f}% | "
+                  f"MEM: {metrics['memory_percent']['current']:.1f}%", end='')
+
+    except KeyboardInterrupt:
+        print("\nShutting down gracefully...")
+        health_monitor.stop()
+        
+        print("Waiting for threads to complete...")
+        for thread in edge_threads + replication_threads:
+            thread.join(timeout=2.0)
+            
+        print("Shutdown complete")
+        
+    except Exception as e:
+        print(f"\nError in main loop: {str(e)}")
+        health_monitor.stop()
 
 if __name__ == "__main__":
     main()

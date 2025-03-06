@@ -30,3 +30,8 @@ encryption.key
 # Version control
 .versions/
 version_db.json
+
+# Logs
+multiregion/logs/
+multiregion/logs/*.log
+multiregion/logs/health_report_*.log
