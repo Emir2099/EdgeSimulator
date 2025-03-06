@@ -5,7 +5,9 @@ import threading
 import time
 import pandas as pd
 from datetime import datetime
-
+from load_balancer import LoadBalancer
+import zlib
+from datetime import datetime
 
 # Directories for regions
 regions = ['region_1', 'region_2', 'region_3']
@@ -17,6 +19,9 @@ for directory in cloud_directories.values():
     os.makedirs(directory, exist_ok=True)
 for directory in replicated_directories.values():
     os.makedirs(directory, exist_ok=True)
+
+# Load balancer
+load_balancer = LoadBalancer(regions)
 
 # Simulate sensor data generation
 def generate_sensor_data():
@@ -50,14 +55,43 @@ def edge_device(region):
 
         time.sleep(1)
 
+# Custom JSON encoder class
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, pd.Timestamp):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        return super().default(obj)
+
 # Save aggregated data to cloud storage
 def save_to_cloud(region, data):
-    file_name = f"aggregated_data_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+    file_name = f"aggregated_data_{datetime.now().strftime('%Y%m%d%H%M%S')}.json.gz"
+    
+    # Compress and get data size
+    json_data = json.dumps(data, cls=DateTimeEncoder)
+    compressed_data = zlib.compress(json_data.encode('utf-8'))
+    data_size = len(compressed_data)
+    
+    # Get optimal region before updating load
+    current_load = load_balancer.region_loads[region]
+    optimal_region = load_balancer.get_optimal_region()
+    
+    # Only redirect if the optimal region has significantly less load
+    if optimal_region != region and load_balancer.region_loads[optimal_region] < current_load * 0.7:
+        print(f"Redirecting data from {region} to {optimal_region} for better load distribution")
+        region = optimal_region
+    
     file_path = os.path.join(cloud_directories[region], file_name)
-
-    # Save data to JSON file
-    with open(file_path, 'w') as f:
-        json.dump(data, f, default=str)
+    
+    # Save compressed data
+    with open(file_path, 'wb') as f:
+        f.write(compressed_data)
+    
+    compression_ratio = (len(json_data.encode('utf-8')) - len(compressed_data)) / len(json_data.encode('utf-8')) * 100
+    print(f"Compression ratio: {compression_ratio:.2f}%")
+    print(f"Current loads: {load_balancer.region_loads}")
+    
+    # Update load balancer
+    load_balancer.update_load(region, data_size)
 
 # Inter-region replication
 def replicate_data(source_region, target_region):
@@ -71,9 +105,23 @@ def replicate_data(source_region, target_region):
 
             if not os.path.exists(target_file):
                 print(f"Replicating {file_name} from {source_region} to {target_region}")
-                with open(source_file, 'r') as src, open(target_file, 'w') as tgt:
-                    tgt.write(src.read())
+                try:
+                    with open(source_file, 'rb') as src, open(target_file, 'wb') as tgt:
+                        tgt.write(src.read())
+                except Exception as e:
+                    print(f"Error replicating file {file_name}: {str(e)}")
         time.sleep(5)
+
+# Read compressed data from file
+def read_compressed_data(file_path):
+    try:
+        with open(file_path, 'rb') as f:
+            compressed_data = f.read()
+            json_data = zlib.decompress(compressed_data).decode('utf-8')
+            return json.loads(json_data)
+    except Exception as e:
+        print(f"Error reading compressed file {file_path}: {str(e)}")
+        return None
 
 # Start the simulation
 def main():

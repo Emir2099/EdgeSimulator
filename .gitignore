@@ -1,6 +1,8 @@
-# Ignore all JSON files in cloud storage directories
+# Ignore JSON and compressed files in storage directories
 *_cloud_storage/*.json
+*_cloud_storage/*.json.gz
 *_replicated_storage/*.json
+*_replicated_storage/*.json.gz
 
 # Python specific
 __pycache__/
