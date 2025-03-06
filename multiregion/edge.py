@@ -10,6 +10,7 @@ import zlib
 from datetime import datetime
 from compression_manager import CompressionManager, CompressionType
 from anomaly_detector import AnomalyDetector
+from smart_cache import SmartCache
 
 # Directories for regions
 regions = ['region_1', 'region_2', 'region_3']
@@ -31,6 +32,8 @@ compression_manager = CompressionManager(CompressionType.ZLIB)
 # Anomaly detector
 anomaly_detector = AnomalyDetector(contamination=0.1)
 
+# Smart cache 
+smart_cache = SmartCache(max_size=20, ttl=300)
 
 def determine_priority(summary, anomaly_prediction):
     """
@@ -146,6 +149,9 @@ def save_to_cloud(region, data):
     # Update load balancer
     load_balancer.update_load(region, data_size)
     
+    # Optionally, cache the new aggregated data so that future reads are fast
+    smart_cache.set(file_path, data)
+    
     # Revert compression manager's type back to original if changed
     compression_manager.compression_type = original_comp_type
 
@@ -162,20 +168,36 @@ def replicate_data(source_region, target_region):
             if not os.path.exists(target_file):
                 print(f"Replicating {file_name} from {source_region} to {target_region}")
                 try:
-                    with open(source_file, 'rb') as src, open(target_file, 'wb') as tgt:
-                        tgt.write(src.read())
+                    # Use the smart cache to get file data
+                    data = read_compressed_data(source_file)
+                    if data:
+                        # Use the custom encoder to convert Timestamps to strings
+                        with open(target_file, 'w') as tgt:
+                            json.dump(data, tgt, cls=DateTimeEncoder)
                 except Exception as e:
                     print(f"Error replicating file {file_name}: {str(e)}")
         time.sleep(5)
 
+
+
 # Read compressed data from file
 def read_compressed_data(file_path):
+    # First, check the smart cache
+    cached_data = smart_cache.get(file_path)
+    if cached_data is not None:
+        print(f"Serving {file_path} from cache")
+        return cached_data
+
+    # If not cached, read from disk and decompress
     try:
         with open(file_path, 'rb') as f:
             compressed_data = f.read()
             json_data = compression_manager.decompress(compressed_data)
             if json_data:
-                return json.loads(json_data.decode('utf-8'))
+                data = json.loads(json_data.decode('utf-8'))
+                # Cache the data for future use
+                smart_cache.set(file_path, data)
+                return data
     except Exception as e:
         print(f"Error reading compressed file {file_path}: {str(e)}")
     return None
