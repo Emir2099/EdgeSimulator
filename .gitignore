@@ -26,3 +26,7 @@ Thumbs.db
 multiregion/encryption.key
 *.key
 encryption.key
+
+# Version control
+.versions/
+version_db.json

@@ -12,6 +12,7 @@ from compression_manager import CompressionManager, CompressionType
 from anomaly_detector import AnomalyDetector
 from smart_cache import SmartCache
 from encryption_manager import EncryptionManager
+from version_control import DataVersionControl
 
 # Directories for regions
 regions = ['region_1', 'region_2', 'region_3']
@@ -38,6 +39,9 @@ smart_cache = SmartCache(max_size=20, ttl=300)
 
 # Encryption manager
 encryption_manager = EncryptionManager()
+
+# Version control
+version_control = DataVersionControl(os.path.dirname(os.path.abspath(__file__)))
 
 def determine_priority(summary, anomaly_prediction):
     """
@@ -152,6 +156,16 @@ def save_to_cloud(region, data):
     with open(file_path, 'wb') as f:
         f.write(encrypted_data)
     
+    # Add version control
+    metadata = {
+        'region': region,
+        'priority': data.get('priority', 'low'),
+        'compression_ratio': compression_ratio,
+        'encryption_status': 'encrypted'
+    }
+    version = version_control.save_version(file_path, data, metadata)
+    print(f"Saved version {version['timestamp']} with checksum {version['checksum']}")
+    
     print(f"Compression ratio: {compression_ratio:.2f}%")
     print(f"Average compression ratio: {compression_manager.get_average_ratio():.2f}%")
     print(f"Current loads: {load_balancer.region_loads}")
@@ -217,6 +231,23 @@ def read_compressed_data(file_path):
     except Exception as e:
         print(f"Error reading compressed file {file_path}: {str(e)}")
     return None
+
+# Add new function for version management
+def manage_versions(file_path):
+    """Utility function to manage versions of a file"""
+    history = version_control.get_version_history(file_path)
+    if not history:
+        print(f"No version history found for {file_path}")
+        return
+    
+    print(f"\nVersion history for {file_path}:")
+    for i, version in enumerate(history):
+        print(f"Version {i}:")
+        print(f"  Timestamp: {version['timestamp']}")
+        print(f"  Checksum: {version['checksum']}")
+        print(f"  Metadata: {version['metadata']}")
+    
+    return history
 
 # Start the simulation
 def main():
