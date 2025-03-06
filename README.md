@@ -1,72 +1,132 @@
-# Edge Computing Simulator
+# Edge Simulator
 
-A multi-region edge computing simulator that demonstrates efficient data aggregation and replication strategies for cloud environments.
+A multi-region edge computing simulator that demonstrates efficient data aggregation and replication strategies for cloud environments
 
-## 🚀 Features
+## Features and Components
 
-- Multi-region edge device simulation
-- Real-time sensor data generation
-- Smart data aggregation at the edge
-- Inter-region data replication
-- Circular replication topology
-- Local storage optimization
+### 1. Data Management
+- **Sensor Data Generation**: Simulates IoT sensor data generation
+- **Edge Pre-Processing**: Aggregates data at edge devices
+- **Cloud Storage**: Simulates cloud storage with local directories
+- **Replication**: Ensures data redundancy across regions
+- **Error Handling**: Handles corrupted files and system failures
 
-## 📁 Project Structure
+### 2. Advanced Features
 
+#### Health Monitoring System
+```python
+class HealthMonitor:
+    """Monitors system health metrics including CPU, memory, disk usage"""
 ```
-EdgeSimulator/
-├── multiregion/
-│   ├── edge.py              # Main simulation logic
-│   ├── region_1_cloud_storage/      # Cloud storage for region 1
-│   ├── region_2_cloud_storage/      # Cloud storage for region 2
-│   ├── region_3_cloud_storage/      # Cloud storage for region 3
-│   ├── region_1_replicated_storage/ # Replicated storage for region 1
-│   ├── region_2_replicated_storage/ # Replicated storage for region 2
-│   └── region_3_replicated_storage/ # Replicated storage for region 3
+- Real-time system metrics tracking
+- Configurable thresholds
+- Alert generation for threshold violations
+
+#### Smart Caching
+```python
+class SmartCache:
+    """Implements LRU caching with TTL for frequent data access"""
 ```
+- Optimizes data access
+- Time-based cache invalidation
+- Memory-efficient storage
 
-## 🔧 Requirements
-
-- Python 3.7+
-- pandas
-- threading (built-in)
-- json (built-in)
-- random (built-in)
-
-## 📦 Installation
-
-```bash
-pip install pandas
+#### Version Control
+```python
+class DataVersionControl:
+    """Manages data versions and maintains checksums"""
 ```
+- File versioning
+- Checksum verification
+- Metadata tracking
 
-## 🚦 Running the Simulator
-
-```bash
-python multiregion/edge.py
+#### Load Balancing
+```python
+class LoadBalancer:
+    """Distributes load across regions dynamically"""
 ```
+- Dynamic load distribution
+- Region health monitoring
+- Automatic failover
 
-## 💡 How It Works
+#### Compression Management
+```python
+class CompressionManager:
+    """Handles data compression with multiple algorithms"""
+```
+- Multiple compression algorithms
+- Adaptive compression based on priority
+- Compression statistics tracking
 
-1. **Edge Device Simulation**
-   - Generates synthetic sensor data (temperature, humidity)
-   - Aggregates data every 5 seconds
-   - Stores aggregated data in regional cloud storage
+#### Encryption
+```python
+class EncryptionManager:
+    """Manages data encryption and key handling"""
+```
+- Secure data encryption
+- Key management
+- Protected data transfer
 
-2. **Data Replication**
-   - Implements circular replication between regions
-   - Automatic synchronization every 5 seconds
-   - Maintains data consistency across regions
+#### Anomaly Detection
+```python
+class AnomalyDetector:
+    """Detects anomalies in sensor data"""
+```
+- Real-time anomaly detection
+- Self-learning capabilities
+- Priority-based handling
 
-3. **Storage Management**
-   - Separate cloud and replicated storage for each region
-   - JSON-based data storage
-   - Efficient data organization
+#### Monitoring Dashboard
+```python
+class MonitoringDashboard:
+    """Real-time system monitoring interface"""
+```
+- System metrics visualization
+- Alert monitoring
+- Resource usage tracking
+- Compression statistics
+- Region load visualization
 
-## 🔑 Key Benefits
+### 3. Efficiency Features
 
-- Reduced cloud egress costs
+#### Priority-Based Processing
+```python
+def determine_priority(summary, anomaly_prediction):
+    """Determines data priority based on content and anomalies"""
+```
+- Adaptive processing based on data importance
+- Resource allocation optimization
+- Critical data prioritization
+
+#### Smart Data Replication
+```python
+def replicate_data(source_region, target_region):
+    """Handles intelligent cross-region data replication"""
+```
+- Selective replication
+- Bandwidth optimization
+- Cost-effective data transfer
+
+### 4. Impact
+
+- Reduced egress costs through edge aggregation
 - Optimized bandwidth usage
-- Multi-region resilience
+- Enhanced fault tolerance
 - Customizable replication strategies
+- Improved data security and integrity
+- Real-time monitoring and alerts
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+```bash
+cd multiregion
+python edge.py
+```
 
 

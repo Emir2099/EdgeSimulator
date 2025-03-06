@@ -35,3 +35,5 @@ version_db.json
 multiregion/logs/
 multiregion/logs/*.log
 multiregion/logs/health_report_*.log
+multiregion/run_dashboard.bat
+multiregion/shared_dashboard_data.json
