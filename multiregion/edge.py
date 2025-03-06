@@ -9,6 +9,7 @@ from load_balancer import LoadBalancer
 import zlib
 from datetime import datetime
 from compression_manager import CompressionManager, CompressionType
+from anomaly_detector import AnomalyDetector
 
 # Directories for regions
 regions = ['region_1', 'region_2', 'region_3']
@@ -26,6 +27,11 @@ load_balancer = LoadBalancer(regions)
 
 # Compression manager
 compression_manager = CompressionManager(CompressionType.ZLIB)
+
+# Anomaly detector
+anomaly_detector = AnomalyDetector(contamination=0.1)
+
+
 
 # Simulate sensor data generation
 def generate_sensor_data():
@@ -54,6 +60,16 @@ def edge_device(region):
                 'humidity': sum(d['humidity'] for d in data_buffer) / len(data_buffer),
             }
             print(f"[{region}] Aggregated Data: {summary}")
+            
+            # Run anomaly detection on aggregated data
+            features = [summary['temperature'], summary['humidity']]
+            prediction = anomaly_detector.predict(features)
+            if prediction == -1:
+                print(f"[{region}] Anomaly detected in aggregated data: {summary}")
+            # Update anomaly detector with the new data point
+            anomaly_detector.update(features)
+
+            # Save aggregated data if no anomaly is detected (or even if detected, depending on requirements)
             save_to_cloud(region, summary)
             data_buffer.clear()
 
