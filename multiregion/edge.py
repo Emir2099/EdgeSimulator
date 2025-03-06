@@ -32,6 +32,20 @@ compression_manager = CompressionManager(CompressionType.ZLIB)
 anomaly_detector = AnomalyDetector(contamination=0.1)
 
 
+def determine_priority(summary, anomaly_prediction):
+    """
+    Determines the priority level based on the anomaly detection and sensor thresholds.
+    If an anomaly is detected, mark as 'high'. Otherwise, if the aggregated values
+    are extreme (e.g., temperature > 70 or humidity < 30), mark as 'medium'.
+    Else return 'low'.
+    """
+    if anomaly_prediction == -1:
+        return "high"
+    elif summary['temperature'] > 20 or summary['humidity'] < 30:
+        return "medium"
+    else:
+        return "low"
+
 
 # Simulate sensor data generation
 def generate_sensor_data():
@@ -69,6 +83,12 @@ def edge_device(region):
             # Update anomaly detector with the new data point
             anomaly_detector.update(features)
 
+            # Determine priority based on anomaly detection and thresholds
+            priority = determine_priority(summary, prediction)
+            summary["priority"] = priority
+            if priority == "high":
+                print(f"[{region}] High priority data detected.")
+
             # Save aggregated data if no anomaly is detected (or even if detected, depending on requirements)
             save_to_cloud(region, summary)
             data_buffer.clear()
@@ -84,6 +104,17 @@ class DateTimeEncoder(json.JSONEncoder):
 
 # Save aggregated data to cloud storage
 def save_to_cloud(region, data):
+    # If high priority, mark filename and change compression algorithm
+    file_flag = ""
+    # Save current compression type to revert later
+    original_comp_type = compression_manager.compression_type
+    if data.get("priority") == "high":
+        file_flag = "PRIORITY_"
+        # For high priority, use best compression (e.g., LZMA) to preserve data fidelity
+        compression_manager.compression_type = CompressionType.LZMA
+    else:
+        # For normal data, use default ZLIB compression
+        compression_manager.compression_type = CompressionType.ZLIB
     file_name = f"aggregated_data_{datetime.now().strftime('%Y%m%d%H%M%S')}.json.gz"
     
     # Compress and get data size
@@ -114,6 +145,9 @@ def save_to_cloud(region, data):
     
     # Update load balancer
     load_balancer.update_load(region, data_size)
+    
+    # Revert compression manager's type back to original if changed
+    compression_manager.compression_type = original_comp_type
 
 # Inter-region replication
 def replicate_data(source_region, target_region):
