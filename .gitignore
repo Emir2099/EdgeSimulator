@@ -21,3 +21,8 @@ ENV/
 # System specific
 .DS_Store
 Thumbs.db
+
+# Encryption keys
+multiregion/encryption.key
+*.key
+encryption.key

@@ -11,6 +11,7 @@ from datetime import datetime
 from compression_manager import CompressionManager, CompressionType
 from anomaly_detector import AnomalyDetector
 from smart_cache import SmartCache
+from encryption_manager import EncryptionManager
 
 # Directories for regions
 regions = ['region_1', 'region_2', 'region_3']
@@ -34,6 +35,9 @@ anomaly_detector = AnomalyDetector(contamination=0.1)
 
 # Smart cache 
 smart_cache = SmartCache(max_size=20, ttl=300)
+
+# Encryption manager
+encryption_manager = EncryptionManager()
 
 def determine_priority(summary, anomaly_prediction):
     """
@@ -120,10 +124,16 @@ def save_to_cloud(region, data):
         compression_manager.compression_type = CompressionType.ZLIB
     file_name = f"aggregated_data_{datetime.now().strftime('%Y%m%d%H%M%S')}.json.gz"
     
-    # Compress and get data size
+    # Compress and encrypt data
     json_data = json.dumps(data, cls=DateTimeEncoder).encode('utf-8')
     compressed_data = compression_manager.compress(json_data)
-    data_size = len(compressed_data)
+    encrypted_data = encryption_manager.encrypt(compressed_data)
+    
+    if encrypted_data is None:
+        print(f"Failed to encrypt data for {region}")
+        return
+    
+    data_size = len(encrypted_data)
     
     # Calculate compression ratio and update stats
     compression_ratio = compression_manager.update_stats(len(json_data), data_size)
@@ -138,9 +148,9 @@ def save_to_cloud(region, data):
     
     file_path = os.path.join(cloud_directories[region], file_name)
     
-    # Save compressed data
+    # Save encrypted data
     with open(file_path, 'wb') as f:
-        f.write(compressed_data)
+        f.write(encrypted_data)
     
     print(f"Compression ratio: {compression_ratio:.2f}%")
     print(f"Average compression ratio: {compression_manager.get_average_ratio():.2f}%")
@@ -191,8 +201,14 @@ def read_compressed_data(file_path):
     # If not cached, read from disk and decompress
     try:
         with open(file_path, 'rb') as f:
-            compressed_data = f.read()
-            json_data = compression_manager.decompress(compressed_data)
+            encrypted_data = f.read()
+            # First decrypt
+            decrypted_data = encryption_manager.decrypt(encrypted_data)
+            if decrypted_data is None:
+                raise Exception("Failed to decrypt data")
+            
+            # Then decompress
+            json_data = compression_manager.decompress(decrypted_data)
             if json_data:
                 data = json.loads(json_data.decode('utf-8'))
                 # Cache the data for future use
