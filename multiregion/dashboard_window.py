@@ -131,9 +131,16 @@ def run_dashboard():
                 
                 compression_stats = shared_data.get('compression_stats', {})
                 if compression_stats:
-                    comp_table.add_row("Average Ratio", f"{compression_stats.get('avg_ratio', 0):.2f}%")
-                    comp_table.add_row("Total Original", f"{compression_stats.get('total_original', 0)/1024:.2f} KB")
-                    comp_table.add_row("Total Compressed", f"{compression_stats.get('total_compressed', 0)/1024:.2f} KB")
+                    # Prefer explicit size_reduction if present, fall back to avg_ratio for backwards compatibility
+                    size_reduction = compression_stats.get('size_reduction', compression_stats.get('avg_ratio', 0.0))
+                    total_original = compression_stats.get('total_original', 0)
+                    total_compressed = compression_stats.get('total_compressed', 0)
+                    compression_factor = (total_compressed / float(total_original)) if total_original > 0 else 0.0
+
+                    comp_table.add_row("Size reduction (%)", f"{size_reduction:.2f}%")
+                    comp_table.add_row("Compression factor", f"{compression_factor:.2f}x")
+                    comp_table.add_row("Total Original", f"{total_original/1024:.2f} KB")
+                    comp_table.add_row("Total Compressed", f"{total_compressed/1024:.2f} KB")
                     comp_table.add_row("Compression Type", compression_stats.get('type', 'unknown'))
                 
                 layout["right"]["compression_stats"].update(

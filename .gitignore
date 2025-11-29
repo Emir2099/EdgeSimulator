@@ -33,6 +33,12 @@ version_db.json
 
 # Logs
 multiregion/logs/
+multiregion/region_1_cloud_storage/
+multiregion/region_1_replicated_storage/
+multiregion/region_2_cloud_storage/
+multiregion/region_2_replicated_storage/
+multiregion/region_3_cloud_storage/
+multiregion/region_3_replicated_storage/
 multiregion/logs/*.log
 multiregion/logs/health_report_*.log
 multiregion/run_dashboard.bat

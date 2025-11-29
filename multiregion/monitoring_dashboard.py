@@ -108,12 +108,20 @@ class MonitoringDashboard:
         table = Table(box=box.ROUNDED)
         table.add_column("Metric")
         table.add_column("Value")
-        
-        avg_ratio = self.compression_manager.get_average_ratio()
-        total_original = self.compression_manager.compression_stats['total_original']
-        total_compressed = self.compression_manager.compression_stats['total_compressed']
-        
-        table.add_row("Average Ratio", f"{avg_ratio:.2f}%")
+        # Use explicit definitions:
+        # size_reduction (%) = (1 - compressed / original) * 100
+        avg_reduction = self.compression_manager.get_average_ratio()
+        total_original = self.compression_manager.compression_stats.get('total_original', 0)
+        total_compressed = self.compression_manager.compression_stats.get('total_compressed', 0)
+
+        # compression factor = compressed / original (>=1 if compressed is larger)
+        if total_original > 0:
+            compression_factor = total_compressed / float(total_original)
+        else:
+            compression_factor = 0.0
+
+        table.add_row("Size reduction (%)", f"{avg_reduction:.2f}%")
+        table.add_row("Compression factor", f"{compression_factor:.2f}x")
         table.add_row("Total Original", f"{total_original/1024:.2f} KB")
         table.add_row("Total Compressed", f"{total_compressed/1024:.2f} KB")
         table.add_row("Compression Type", str(self.compression_manager.compression_type.value))
@@ -219,10 +227,16 @@ class MonitoringDashboard:
                             for region, load in self.load_balancer.region_loads.items()
                         },
                         'compression_stats': {
-                            'avg_ratio': self.compression_manager.get_average_ratio(),
-                            'total_original': self.compression_manager.compression_stats.get('total_original', 0),
-                            'total_compressed': self.compression_manager.compression_stats.get('total_compressed', 0),
-                            'type': str(self.compression_manager.compression_type.value)
+                                    'size_reduction': self.compression_manager.get_average_ratio(),
+                                    'avg_ratio': self.compression_manager.get_average_ratio(),
+                                    'total_original': self.compression_manager.compression_stats.get('total_original', 0),
+                                    'total_compressed': self.compression_manager.compression_stats.get('total_compressed', 0),
+                                    'compression_factor': (
+                                        self.compression_manager.compression_stats.get('total_compressed', 0) /
+                                        self.compression_manager.compression_stats.get('total_original', 1)
+                                        if self.compression_manager.compression_stats.get('total_original', 0) > 0 else 0.0
+                                    ),
+                                    'type': str(self.compression_manager.compression_type.value)
                         }
                     }
                     
@@ -242,9 +256,11 @@ class MonitoringDashboard:
             'alerts': [],
             'region_loads': self.load_balancer.region_loads,
             'compression_stats': {
+                'size_reduction': 0.0,
                 'avg_ratio': 0.0,
                 'total_original': 0,
                 'total_compressed': 0,
+                'compression_factor': 0.0,
                 'type': str(self.compression_manager.compression_type.value)
             }
         }
