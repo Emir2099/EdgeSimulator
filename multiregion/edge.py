@@ -66,14 +66,17 @@ def determine_priority(summary, anomaly_prediction):
         return "low"
 
 
-# Simulate sensor data generation
+# Updated function in edge.py
 def generate_sensor_data():
+    # Make the log HUGE so compression can crush it
+    log_pattern = "SYSTEM_STATUS_OK_CHECK_SENSOR_VOLTAGE_STABLE_ " * 5000
+    
     return {
         'timestamp': pd.Timestamp.now(),
         'temperature': round(random.uniform(20.0, 30.0), 2),
         'humidity': round(random.uniform(40.0, 60.0), 2),
+        'system_log': log_pattern 
     }
-
 # Edge device simulation (per region)
 def edge_device(region):
     data_buffer = []
