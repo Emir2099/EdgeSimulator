@@ -57,6 +57,7 @@ bars = plt.bar(categories, averages, yerr=std_dev, capsize=5,
 plt.title("System Latency Breakdown (Overhead Analysis)", fontsize=14)
 plt.ylabel("Processing Time (milliseconds)")
 plt.xlabel("Pipeline Stage")
+plt.ylim(bottom=0)
 
 # Add text labels
 for bar in bars:

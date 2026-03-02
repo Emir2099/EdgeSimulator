@@ -1,11 +1,11 @@
-from cryptography.fernet import Fernet
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 import os
 
 class EncryptionManager:
     def __init__(self):
         self.key_file = "encryption.key"
         self.key = self._load_or_generate_key()
-        self.cipher_suite = Fernet(self.key)
         self.stats = {
             'total_encrypted': 0,
             'total_decrypted': 0,
@@ -13,22 +13,25 @@ class EncryptionManager:
         }
 
     def _load_or_generate_key(self):
-        """Load existing key or generate new one"""
+        """Load existing 256-bit key or generate new one"""
         if os.path.exists(self.key_file):
             with open(self.key_file, "rb") as f:
                 return f.read()
         else:
-            key = Fernet.generate_key()
+            key = get_random_bytes(32)  # 256-bit key for AES-256
             with open(self.key_file, "wb") as f:
                 f.write(key)
             return key
 
     def encrypt(self, data):
-        """Encrypt data"""
+        """Encrypt data using AES-256-GCM"""
         try:
             if isinstance(data, str):
                 data = data.encode()
-            encrypted_data = self.cipher_suite.encrypt(data)
+            cipher = AES.new(self.key, AES.MODE_GCM)
+            ciphertext, tag = cipher.encrypt_and_digest(data)
+            # Format: nonce (16B) + tag (16B) + ciphertext
+            encrypted_data = cipher.nonce + tag + ciphertext
             self.stats['total_encrypted'] += len(encrypted_data)
             return encrypted_data
         except Exception as e:
@@ -37,9 +40,13 @@ class EncryptionManager:
             return None
 
     def decrypt(self, encrypted_data):
-        """Decrypt data"""
+        """Decrypt data using AES-256-GCM"""
         try:
-            decrypted_data = self.cipher_suite.decrypt(encrypted_data)
+            nonce      = encrypted_data[:16]
+            tag        = encrypted_data[16:32]
+            ciphertext = encrypted_data[32:]
+            cipher = AES.new(self.key, AES.MODE_GCM, nonce=nonce)
+            decrypted_data = cipher.decrypt_and_verify(ciphertext, tag)
             self.stats['total_decrypted'] += len(decrypted_data)
             return decrypted_data
         except Exception as e:

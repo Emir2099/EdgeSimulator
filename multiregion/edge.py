@@ -132,17 +132,23 @@ def save_to_cloud(region, data):
     file_flag = ""
     original_comp_type = compression_manager.compression_type
     
+    # Serialize first so json_data is available for adaptive compression
+    json_data = json.dumps(data, cls=DateTimeEncoder).encode('utf-8')
+
     # Adaptive Compression Logic (RQ2)
     if data.get("priority") == "high":
         file_flag = "PRIORITY_"
         compression_manager.compression_type = CompressionType.LZMA
     else:
         compression_manager.compression_type = CompressionType.ZLIB
+        compressed = compression_manager.compress(json_data)
+        ratio = (len(json_data) - len(compressed)) / len(json_data)
+        if ratio < 0.5:
+            compression_manager.compression_type = CompressionType.BZ2
         
     file_name = f"aggregated_data_{datetime.now().strftime('%Y%m%d%H%M%S')}.json.gz"
     
     # Processing Overhead (CPU)
-    json_data = json.dumps(data, cls=DateTimeEncoder).encode('utf-8')
     compressed_data = compression_manager.compress(json_data)
     encrypted_data = encryption_manager.encrypt(compressed_data)
     
