@@ -209,7 +209,7 @@ python gen_lb_table.py
 ### Installation
 
 ```bash
-git clone https://github.com/Emir2099/EdgeSimulator.git
+git clone https://github.com/Emir2099/S-Edge.git
 cd EdgeSimulator
 pip install -r requirements.txt
 ```
