@@ -1,0 +1,8 @@
+Stage,Category,Mean_us_Ryzen7,Std_us_Ryzen7,Min_us_Ryzen7,Max_us_Ryzen7,Est_us_Raspberry,Est_us_ESP32
+Anomaly Detection (Isolation Forest),inference,0.3,0.6,0.2,8.4,3.6,18.0
+ZLIB Compression (1 KB),compression,10.9,23.2,8.1,335.8,109.0,545.0
+BZ2 Compression (1 KB),compression,676.9,2230.0,348.7,32019.2,6769.0,33845.0
+LZMA Compression (1 KB),compression,2517.6,2658.8,1258.2,27117.0,25176.0,125880.0
+AES-256-GCM Encryption (1 KB),crypto,238.9,2076.7,78.4,29460.0,4300.2,19112.0
+SHA-256 Integrity Hash (1 KB),crypto,3.3,2.4,3.1,37.3,59.4,264.0
+SQLite WAL Write,db,1554.0,240.6,1259.9,3423.3,9324.0,46620.0

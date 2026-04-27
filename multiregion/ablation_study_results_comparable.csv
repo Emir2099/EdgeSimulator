@@ -1,0 +1,4 @@
+Condition,Violations,Redirects,Oscillations,Net. Cost (ms),LZMA Acts.,Anomaly Output (B)
+S-Edge FULL,35,33,9,1650,5,2733
+No Anomaly Branch,35,33,9,1650,0,3842
+No Hysteresis (alpha=1.0),34,33,7,1650,5,2734

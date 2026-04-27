@@ -1,0 +1,4 @@
+Scenario,Precision,Recall,F1 Score,False Positive Rate
+"A: Isolated (paper setup, Section 6.1)",0.998,1.0,0.999,0.0
+B: Partial Overlap (4-degree gap),0.63,0.63,0.63,0.041
+C: Heavy Overlap (10-degree gap),0.39,0.39,0.39,0.068

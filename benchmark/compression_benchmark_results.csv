@@ -1,0 +1,4 @@
+Strategy,Mean Size (KB),Std Size (KB),Mean Time (ms),Std Time (ms),Mean Energy (mJ),Std Energy (mJ),vs ZLIB size,vs LZMA energy
+Static ZLIB,18.47,0.0,21.7,4.4,86.88,17.47,—,—
+Static LZMA,1.38,0.0,143.1,8.4,572.44,33.54,-92.5%,—
+S-Edge Adaptive,16.32,0.81,84.6,5.8,338.27,23.32,-11.6%,-40.9%

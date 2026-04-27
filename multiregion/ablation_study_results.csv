@@ -1,0 +1,4 @@
+Condition,Threshold Violations,Marginal Violations (<30%),Total Redirects,Routing Oscillations,Network Overhead (ms),LZMA Activations,Mean Anomaly Output (bytes)
+S-Edge FULL,27,15,58,32,2900,12,517
+No Anomaly Branch,27,15,58,32,2900,0,3841
+No Hysteresis (alpha=1.0),21,9,72,28,3600,12,515

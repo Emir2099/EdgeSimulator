@@ -16,7 +16,7 @@ try:
     from load_balancer import LoadBalancer
 except ImportError:
     # Fallback if the file structure is different (e.g. inside a 'multiregion' package)
-    from multiregion.load_balancer import LoadBalancer
+    from multiregion.deprecated.load_balancer import LoadBalancer
 
 # --- CONFIGURATION ---
 REGIONS = ['region_1', 'region_2', 'region_3']

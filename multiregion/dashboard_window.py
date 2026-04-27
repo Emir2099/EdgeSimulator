@@ -16,8 +16,8 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(current_dir))
 
 from multiregion.health_monitor import HealthMonitor
-from multiregion.load_balancer import LoadBalancer
-from multiregion.compression_manager import CompressionManager, CompressionType
+from multiregion.deprecated.load_balancer import LoadBalancer
+from multiregion.deprecated.compression_manager import CompressionManager, CompressionType
 
 # Shared data path
 SHARED_DATA_PATH = os.path.join(current_dir, 'shared_dashboard_data.json')

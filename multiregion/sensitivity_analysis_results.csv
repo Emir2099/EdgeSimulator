@@ -1,0 +1,6 @@
+alpha,Threshold Violations,Total Redirects,Mean CPU (%)
+0.5,63,84,60.2
+0.6,66,92,59.6
+0.7,53,122,57.7
+0.8,46,136,57.5
+0.9,46,137,57.4
